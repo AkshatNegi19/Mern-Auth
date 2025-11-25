@@ -13,11 +13,8 @@ A complete authentication system built using MongoDB, Express.js, React, and Nod
 **📂 Folder Structure**  
 **🔐 Authentication Flow**  
 **📡 API Endpoints**  
-**🔧 Environment Variables**  
-**🛠️ Installation**  
-**📘 How It Works (Important Concepts)**  
-**🛡️ Security Measures**  
 **🏁 Conclusion**
+**📘 Ideal for**  
 
 ---
 
