@@ -1,6 +1,6 @@
 import { assets } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
-import React, { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import axios from "axios";
 import { AppContent } from "../context/AppContext";
 import { toast } from "react-toastify";
@@ -12,24 +12,20 @@ const EmailVerify = () => {
   const navigate = useNavigate();
   const inputRefs = useRef([]);
 
-  // Auto focus next box
   const handleInput = (e, index) => {
-    if (e.target.value && index < inputRefs.current.length - 1) {
+    if (e.target.value && index < 5) {
       inputRefs.current[index + 1].focus();
     }
   };
 
-  // Backspace navigation
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !e.target.value && index > 0) {
       inputRefs.current[index - 1].focus();
     }
   };
 
-  // Paste OTP
   const handlePaste = (e) => {
     const paste = e.clipboardData.getData("text").slice(0, 6);
-
     paste.split("").forEach((char, index) => {
       if (inputRefs.current[index]) {
         inputRefs.current[index].value = char;
@@ -37,20 +33,19 @@ const EmailVerify = () => {
     });
   };
 
-  // Submit OTP
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
+    const otp = inputRefs.current.map((i) => i.value).join("");
+
+    if (otp.length !== 6) {
+      toast.error("Enter complete OTP");
+      return;
+    }
+
     try {
-      const otp = inputRefs.current.map((i) => i.value).join("");
-
-      if (otp.length !== 6) {
-        toast.error("Please enter complete OTP");
-        return;
-      }
-
       const { data } = await axios.post(
-        `$/api/auth/verify-account`,
+        `${backendUrl}/api/auth/verify-account`,
         { otp },
         { withCredentials: true }
       );
@@ -62,39 +57,34 @@ const EmailVerify = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message);
     }
   };
 
-  // Redirect if already verified
   useEffect(() => {
     if (isLoggedIn && userData?.isAccountVerified) {
       navigate("/");
     }
-  }, [isLoggedIn, userData, navigate]);
+  }, [isLoggedIn, userData]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-6 sm:px-0 bg-gradient-to-br from-blue-200 to-purple-400">
+    <div className="flex items-center justify-center min-h-screen px-6 bg-gradient-to-br from-blue-200 to-purple-400">
       <img
         onClick={() => navigate("/")}
         src={assets.logo}
-        alt="logo"
-        className="absolute left-5 sm:left-20 top-5 w-28 sm:w-32 cursor-pointer"
+        alt=""
+        className="absolute left-5 top-5 w-28 cursor-pointer"
       />
 
       <form
         onSubmit={onSubmitHandler}
-        className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm"
         onPaste={handlePaste}
+        className="bg-slate-900 p-8 rounded-lg shadow-lg w-96"
       >
         <h1 className="text-white text-2xl font-semibold text-center mb-4">
           Email Verify OTP
         </h1>
-
-        <p className="text-center mb-6 text-indigo-300">
-          Enter the 6-digit code sent to your email.
-        </p>
 
         <div className="flex justify-between mb-8">
           {Array(6)
