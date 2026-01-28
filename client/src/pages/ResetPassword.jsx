@@ -78,7 +78,8 @@ const ResetPassword = () => {
           email,
           otp: enteredOtp,
           newPassword: "__dummy__",
-        }
+        },
+        {withCredentials:true}
       );
 
       if (!data.success && data.message === "Invalid OTP") {
