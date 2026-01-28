@@ -57,11 +57,12 @@ const ResetPassword = () => {
     }
 
     try {
-      const { data } = await axios.post(
-        `${backendUrl}/api/auth/reset-password`,
-        { email, otp: enteredOtp, newPassword: "__dummy__" },
-        { withCredentials: true } // ensure credentials are sent
-      );
+        const { data } = await axios.post(
+          `${backendUrl}/api/auth/verify-reset-otp`,
+          { email, otp: enteredOtp },
+          { withCredentials: true }
+        );
+
 
       if (data.success) {
         setOtp(enteredOtp);
