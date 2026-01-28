@@ -11,7 +11,7 @@ const port = process.env.PORT || 4000
 connectDB();
 
 const allowedOrigins = [
-  "https://mern-auth-pi-woad.vercel.app",
+  "https://mern-auth-eosin-sigma.vercel.app/",
   "http://localhost:5173"
 ];
 
