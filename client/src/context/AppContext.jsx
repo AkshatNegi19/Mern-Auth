@@ -4,58 +4,52 @@ import axios from "axios";
 
 export const AppContent = createContext();
 
-export const AppContextProvider = ({ children }) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+export const AppContextProvider = (props)=>{
 
-  // ✅ Set global axios defaults
-  axios.defaults.withCredentials = true;
-  axios.defaults.baseURL = backendUrl;
+    axios.defaults.withCredentials = true;
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userData, setUserData] = useState(null);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL
+    const [isLoggedIn,setIsLoggedIn] = useState(false);
+    const [userData,setUserData] = useState(false); 
 
-  // Check auth status
-  const getAuthState = async () => {
-    try {
-      const { data } = await axios.post("/api/auth/is-auth"); // relative path works
-      if (data.success) {
-        setIsLoggedIn(true);
-        await getUserData();
-      } else {
-        setIsLoggedIn(false);
-        setUserData(null);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+    const getAuthState = async()=> {
+        try {
+            const {data} = await axios.post(backendUrl + "/api/auth/is-auth",{},{withCredentials:true});   
+            if (data.success) {
+                setIsLoggedIn(true);
+                await getUserData()
+            }
+        } catch (error) {
+            toast.error(error.message);
+        }
     }
-  };
 
-  // Fetch user data
-  const getUserData = async () => {
-    try {
-      const { data } = await axios.get("/api/user/data");
-      if (data.success) {
-        setUserData(data.userData);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+    const getUserData = async()=> {
+        try {
+            const {data} = await axios.get(backendUrl+"/api/user/data");
+            data.success ? setUserData(data.userData) : toast.error(data.message)
+        } catch (error) {
+            toast.error(error.message);
+        }
     }
-  };
 
-  useEffect(() => {
-    getAuthState();
-  }, []);
+    useEffect(()=>{
+        getAuthState();
+    },[])
 
-  const value = {
-    backendUrl,
-    isLoggedIn,
-    setIsLoggedIn,
-    userData,
-    setUserData,
-    getUserData,
-  };
+    const value = {
+        backendUrl,
+        isLoggedIn,
+        setIsLoggedIn,
+        userData,
+        setUserData,
+        getUserData
+    }
 
-  return <AppContent.Provider value={value}>{children}</AppContent.Provider>;
-};
+    return (
+        <AppContent.Provider value={value}> 
+            {props.children}
+        </AppContent.Provider>
+    )
+}
+
