@@ -1,13 +1,13 @@
-import { useContext, useState } from "react";
-import { assets } from "../assets/assets";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContent } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { AppContent } from "../context/AppContext"; // adjust import path
+import { assets } from "../assets/assets";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { setIsLoggedIn, getUserData } = useContext(AppContent);
+  const { backendUrl, setIsLoggedIn, getUserData } = useContext(AppContent);
 
   const [state, setState] = useState("Sign Up");
   const [name, setName] = useState("");
@@ -15,31 +15,41 @@ const Login = () => {
   const [password, setPassword] = useState("");
 
   const onSubmitHandler = async (e) => {
-    e.preventDefault();
-
     try {
-      // Decide API endpoint based on state
-      const url =
-        state === "Sign Up" ? "/api/auth/register" : "/api/auth/login";
+      e.preventDefault();
+      axios.defaults.withCredentials = true;
 
-      // Build payload
-      const payload =
-        state === "Sign Up"
-          ? { name, email, password }
-          : { email, password };
+      if (state === "Sign Up") {
+        const { data } = await axios.post(`${backendUrl}/api/auth/register`, {
+          name,
+          email,
+          password,
+        });
 
-      // Send request (axios.defaults.baseURL is already set)
-      const { data } = await axios.post(url, payload);
-
-      if (data.success) {
-        setIsLoggedIn(true);
-        await getUserData();
-        navigate("/");
+        if (data.success) {
+          setIsLoggedIn(true);
+          getUserData();
+          navigate("/");
+        } else {
+          toast.error(data.message);
+        }
       } else {
-        toast.error(data.message || "Something went wrong!");
+        const { data } = await axios.post(`${backendUrl}/api/auth/login`, {
+          email,
+          password,
+        });
+
+        if (data.success) {
+          setIsLoggedIn(true);
+          getUserData();
+          navigate("/");
+          toast.success("Logged in Successfully")
+        } else {
+          toast.error(data.message);
+        }
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      toast.error(error.message);
     }
   };
 
@@ -48,54 +58,53 @@ const Login = () => {
       <img
         onClick={() => navigate("/")}
         src={assets.logo}
-        alt=""
+        alt="Logo"
         className="absolute left-5 sm:left-20 top-5 w-28 sm:w-32 cursor-pointer"
       />
+
       <div className="bg-slate-900 p-10 rounded-lg shadow-lg w-full sm:w-96 text-indigo-300 text-sm">
         <h2 className="text-3xl font-semibold text-white text-center mb-3">
           {state === "Sign Up" ? "Create Account" : "Login"}
         </h2>
         <p className="text-center text-sm mb-6">
-          {state === "Sign Up"
-            ? "Create your account"
-            : "Login to your account!"}
+          {state === "Sign Up" ? "Create your account" : "Login to your account!"}
         </p>
 
         <form onSubmit={onSubmitHandler}>
           {state === "Sign Up" && (
             <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-              <img src={assets.person_icon} alt="" />
+              <img src={assets.person_icon} alt="Person Icon" />
               <input
-                type="text"
-                value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Full Name"
+                value={name}
                 className="bg-transparent outline-none w-full"
+                type="text"
+                placeholder="Full Name"
                 required
               />
             </div>
           )}
 
           <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-            <img src={assets.mail_icon} alt="" />
+            <img src={assets.mail_icon} alt="Mail Icon" />
             <input
-              type="email"
-              value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email id"
+              value={email}
               className="bg-[#333A5C] text-white placeholder-gray-300 outline-none w-full"
+              type="email"
+              placeholder="Email id"
               required
             />
           </div>
 
           <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-            <img src={assets.lock_icon} alt="" />
+            <img src={assets.lock_icon} alt="Lock Icon" />
             <input
-              type="password"
-              value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              value={password}
               className="bg-[#333A5C] text-white placeholder-gray-300 outline-none w-full"
+              type="password"
+              placeholder="Password"
               required
             />
           </div>
@@ -112,17 +121,27 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="text-gray-400 text-center text-xs mt-4">
-          {state === "Sign Up"
-            ? "Already have an account? "
-            : "Don't have an account? "}
-          <span
-            onClick={() => setState(state === "Sign Up" ? "Login" : "Sign Up")}
-            className="text-blue-400 cursor-pointer underline"
-          >
-            {state === "Sign Up" ? "Login here" : "Sign Up"}
-          </span>
-        </p>
+        {state === "Sign Up" ? (
+          <p className="text-gray-400 text-center text-xs mt-4">
+            Already have an account?{" "}
+            <span
+              onClick={() => setState("Login")}
+              className="text-blue-400 cursor-pointer underline"
+            >
+              Login here
+            </span>
+          </p>
+        ) : (
+          <p className="text-gray-400 text-center text-xs mt-4">
+            Don't have an account?{" "}
+            <span
+              onClick={() => setState("Sign Up")}
+              className="text-blue-400 cursor-pointer underline"
+            >
+              Sign Up
+            </span>
+          </p>
+        )}
       </div>
     </div>
   );
