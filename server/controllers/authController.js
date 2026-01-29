@@ -2,15 +2,11 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
-import {
-  EMAIL_VERIFY_TEMPLATE,
-  PASSWORD_RESET_TEMPLATE
-} from "../config/emailTemplate.js";
+import { EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE } from "../config/emailTemplate.js";
 
 /* ================= REGISTER ================= */
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
-
   if (!name || !email || !password) {
     return res.json({ success: false, message: "Missing Details" });
   }
@@ -25,24 +21,20 @@ export const register = async (req, res) => {
     const user = new userModel({ name, email, password: hashedPassword });
     await user.save();
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     await transporter.sendMail({
       from: process.env.SENDER_EMAIL,
       to: email,
       subject: "Welcome to GreatStack",
-      text: `Welcome to the mernauth website. Your account has been created with email id: ${email}`
+      text: `Welcome to the mernauth website. Your account has been created with email id: ${email}`,
     });
 
     return res.json({ success: true });
@@ -54,12 +46,8 @@ export const register = async (req, res) => {
 /* ================= LOGIN ================= */
 export const login = async (req, res) => {
   const { email, password } = req.body;
-
   if (!email || !password) {
-    return res.json({
-      success: false,
-      message: "Email and password are required"
-    });
+    return res.json({ success: false, message: "Email and password are required" });
   }
 
   try {
@@ -73,17 +61,13 @@ export const login = async (req, res) => {
       return res.json({ success: false, message: "Invalid password" });
     }
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.json({ success: true });
@@ -98,9 +82,8 @@ export const logout = async (req, res) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
     });
-
     return res.json({ success: true, message: "Logged Out" });
   } catch (error) {
     return res.json({ success: false, message: error.message });
@@ -111,12 +94,8 @@ export const logout = async (req, res) => {
 export const sendVerifyOtp = async (req, res) => {
   try {
     const user = await userModel.findById(req.userId);
-
     if (user.isAccountVerified) {
-      return res.json({
-        success: false,
-        message: "Account already verified"
-      });
+      return res.json({ success: false, message: "Account already verified" });
     }
 
     const otp = String(Math.floor(100000 + Math.random() * 900000));
@@ -128,15 +107,10 @@ export const sendVerifyOtp = async (req, res) => {
       from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Account Verification OTP",
-      html: EMAIL_VERIFY_TEMPLATE
-        .replace(/{{otp}}/g, otp)
-        .replace(/{{email}}/g, user.email)
+      html: EMAIL_VERIFY_TEMPLATE.replace(/{{otp}}/g, otp).replace(/{{email}}/g, user.email),
     });
 
-    return res.json({
-      success: true,
-      message: "Verification OTP sent on email"
-    });
+    return res.json({ success: true, message: "Verification OTP sent on email" });
   } catch (error) {
     return res.json({ success: false, message: error.message });
   }
@@ -145,7 +119,6 @@ export const sendVerifyOtp = async (req, res) => {
 /* ================= VERIFY EMAIL ================= */
 export const verifyEmail = async (req, res) => {
   const { otp } = req.body;
-
   if (!otp) {
     return res.json({ success: false, message: "OTP is required" });
   }
@@ -156,7 +129,7 @@ export const verifyEmail = async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    if (String(user.verifyOtp) !== String(otp)) {
+    if (user.verifyOtp !== otp) {
       return res.json({ success: false, message: "Invalid OTP" });
     }
 
@@ -169,10 +142,7 @@ export const verifyEmail = async (req, res) => {
     user.verifyOtpExpireAt = 0;
     await user.save();
 
-    return res.json({
-      success: true,
-      message: "Email verified successfully"
-    });
+    return res.json({ success: true, message: "Email verified successfully" });
   } catch (error) {
     return res.json({ success: false, message: error.message });
   }
@@ -186,7 +156,6 @@ export const isAuthenticated = async (req, res) => {
 /* ================= SEND RESET OTP ================= */
 export const sendResetOtp = async (req, res) => {
   const { email } = req.body;
-
   if (!email) {
     return res.json({ success: false, message: "Email is required" });
   }
@@ -206,28 +175,24 @@ export const sendResetOtp = async (req, res) => {
       from: process.env.SENDER_EMAIL,
       to: user.email,
       subject: "Password Reset OTP",
-      html: PASSWORD_RESET_TEMPLATE
-        .replace(/{{otp}}/g, otp)
-        .replace(/{{email}}/g, user.email)
+      html: PASSWORD_RESET_TEMPLATE.replace(/{{otp}}/g, otp).replace(/{{email}}/g, user.email),
     });
 
-    return res.json({
-      success: true,
-      message: "OTP sent to your email"
-    });
+    return res.json({ success: true, message: "OTP sent to your email" });
   } catch (error) {
     return res.json({ success: false, message: error.message });
   }
 };
 
-/* ================= RESET PASSWORD ================= */
-export const resetPassword = async (req, res) => {
-  const { email, otp, newPassword } = req.body;
+/* ================= VERIFY RESET OTP ================= */
 
-  if (!email || !otp || !newPassword) {
+export const verifyResetOtp = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
     return res.json({
       success: false,
-      message: "Email, OTP and new password are required"
+      message: "Email and OTP are required",
     });
   }
 
@@ -235,7 +200,53 @@ export const resetPassword = async (req, res) => {
     const user = await userModel.findOne({ email });
 
     if (!user || !user.resetOtp) {
-      return res.json({ success: false, message: "Invalid OTP" });
+      return res.json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    if (String(user.resetOtp) !== String(otp)) {
+      return res.json({
+        success: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    if (user.resetOtpExpireAt < Date.now()) {
+      return res.json({
+        success: false,
+        message: "OTP expired",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "OTP verified",
+    });
+  } catch (error) {
+    console.error("VERIFY RESET OTP ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+
+/* ================= RESET PASSWORD ================= */
+export const resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) {
+    return res.json({ success: false, message: "Email, OTP and new password are required" });
+  }
+
+  try {
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
     }
 
     if (String(user.resetOtp) !== String(otp)) {
@@ -251,52 +262,8 @@ export const resetPassword = async (req, res) => {
     user.resetOtpExpireAt = 0;
     await user.save();
 
-    return res.json({
-      success: true,
-      message: "Password has been reset successfully"
-    });
+    return res.json({ success: true, message: "Password has been reset successfully" });
   } catch (error) {
     return res.json({ success: false, message: error.message });
-  }
-};
-  
-/* ================= VERIFY RESET OTP ================= */
-export const verifyResetOtp = async (req, res) => {
-  const { email, otp } = req.body;
-
-  if (!email || !otp) {
-    return res.json({
-      success: false,
-      message: "Email and OTP required"
-    });
-  }
-
-  try {
-    const user = await userModel.findOne({ email });
-
-    if (!user || user.resetOtp !== otp) {
-      return res.json({
-        success: false,
-        message: "Invalid OTP"
-      });
-    }
-
-    if (user.resetOtpExpireAt < Date.now()) {
-      return res.json({
-        success: false,
-        message: "OTP expired"
-      });
-    }
-
-    return res.json({
-      success: true,
-      message: "OTP verified"
-    });
-
-  } catch (error) {
-    return res.json({
-      success: false,
-      message: error.message
-    });
   }
 };
