@@ -144,13 +144,11 @@ This is a production-ready authentication system built using the MERN stack. It 
 
 # Client Side (React + Vite + TailwindCSS)
 
-<img width="1027" height="451" alt="image" src="https://github.com/user-attachments/assets/2ce4bb79-0212-432b-8d06-d662c331f797" />
-
+<img width="369" height="600" alt="image" src="https://github.com/user-attachments/assets/ef91bd66-29ab-4bf7-8195-3c245258b26d" />
 
 # Server Side (Node.js + Express)
 
-<img width="938" height="688" alt="image" src="https://github.com/user-attachments/assets/058a3e3b-729a-4de3-a731-c02473609ae5" />
-
+<img width="324" height="303" alt="image" src="https://github.com/user-attachments/assets/b1835d10-50a6-4949-9396-7efe751ac105" />
 
 <h1>Authentication Flow </h1>
 
